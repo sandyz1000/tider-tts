@@ -1,0 +1,96 @@
+[package]
+name = "tider-tts"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "tts_rs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tts-rs"
+path = "src/main.rs"
+
+[[bin]]
+name = "download-model"
+path = "src/bin/download_model.rs"
+
+[[bin]]
+name = "synth"
+path = "src/bin/synth.rs"
+
+
+# Build with --features coreml on macOS for Metal acceleration.
+[features]
+default = []
+coreml = ["ort/coreml"]
+
+# ONNX Runtime — load-dynamic avoids compiling ORT from source
+[dependencies.ort]
+version = "=2.0.0-rc.12"
+default-features = false
+features = [
+    "std",
+    "ndarray",
+    "download-binaries",
+    "tls-rustls",
+
+    # We use the `Adapter` API, which is only available since ONNX Runtime 1.20,
+    # so set our minimum API version to 20.
+    "api-20",
+]
+
+[dependencies]
+
+axum = "0.8"                                                   # HTTP server
+async-channel = "2"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+mimalloc = { version = "0.1", default-features = false }       # returns freed pages to OS promptly
+
+# Serialisation
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0.150"
+
+# Audio encoding
+hound = "3" # WAV (intermediate)
+mp3lame-encoder = { version = "0.2", features = [
+    "std",
+] } # MP3 via LAME; std enables Error impls
+
+clap = { version = "4.6.1", features = ["derive"] }
+
+url = "2"
+
+# HTTP client + progress bars (used by download-model binary)
+reqwest = { version = "0.13.4", features = [
+    "blocking",
+    "rustls",
+    "json",
+], default-features = false }
+hmac = "0.13"
+sha2 = "0.11"
+hex = "0.4"
+indicatif = "0.18.4"
+
+# Phonemization
+misaki-rs = { version = "0.3", default-features = false }
+espeakng = { git = "https://github.com/sandyz1000/espeakNG-rs.git", branch = "main" }
+
+# Async job store
+uuid = { version = "1.23.2", features = ["v4"] }
+
+redis = { version = "1.2.2", features = ["tokio-comp", "connection-manager"] }
+
+# S3 / Tigris (audio upload)
+aws-sdk-s3 = "1"
+aws-config = { version = "1", default-features = false, features = ["rustls"] }
+
+# Error handling & logging
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tempfile = "3"
+axum-test = "20.1.0"

@@ -1,0 +1,41 @@
+app = "tider-tts"
+primary_region = "lhr"
+
+[build]
+dockerfile = "Dockerfile"
+
+[env]
+PORT = "8080"
+SESSION_POOL_SIZE = "1"
+REDIS_URL = "redis://localhost:6379"
+
+[[vm]]
+size = "performance-1x"
+memory = "2gb"
+
+[[services]]
+internal_port = 8080
+protocol = "tcp"
+
+[[services.ports]]
+port = 443
+handlers = ["tls", "http"]
+
+[[services.ports]]
+port = 80
+handlers = ["http"]
+
+[[services.http_checks]]
+path = "/health"
+interval = "30s"
+timeout = "10s"
+grace_period = "120s" # first boot downloads ~330 MB before serving
+
+# [machines]
+# auto_stop_machines = "stop"
+# auto_start_machines = true
+# min_machines_running = 1
+
+[[mounts]]
+source = "models_data"
+destination = "/models"
